@@ -1,0 +1,61 @@
+{
+  "[go]": {
+    "editor.formatOnSave": false,
+    "editor.codeActionsOnSave": {
+        "source.organizeImports": "never"
+    }
+  },
+  
+  "workbench.colorTheme": "Monokai",
+  "security.workspace.trust.untrustedFiles": "open",
+  "workbench.colorCustomizations": {
+    "editor.background": "#121207",
+    "editorGutter.background": "#030303",
+    "editorLineNumber.activeForeground": "#ffffff",
+    "editor.lineHighlightBackground": "#000000"
+  },
+  "editor.fontFamily": "'PragmataPro', 'Courier New', monospace",
+  "editor.fontSize": 16,
+  "editor.fontWeight": "normal",
+  "editor.tokenColorCustomizations": {
+    "comments": "#444444",
+    "numbers": "#06bb00",
+    "textMateRules": [
+      {
+        "scope": [
+          "keyword",
+          "keyword.control",
+          "keyword.control.go"
+        ],
+        "settings": {
+          "foreground": "#999999",
+          "fontStyle": "bold"
+        }
+      },
+      {
+        "scope": [
+          "keyword.operator",
+          "keyword.operator.go",
+          "keyword.operator.assignment.go",
+          "keyword.operator.arithmetic.go",
+          "keyword.operator.relational.go"
+        ],
+        "settings": {
+          "foreground": "#943737",
+          "fontStyle": "bold"
+        }
+      },
+      {
+        "scope": [
+          "entity.name.type",
+          "entity.name.type.go",
+          "support.type.go"
+        ],
+        "settings": {
+          "foreground": "#8BE9FD"
+        }
+      }
+    ]
+  },
+  "git.openRepositoryInParentFolders": "never"
+}
