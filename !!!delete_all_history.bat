@@ -1,6 +1,7 @@
 @echo off
 chcp 65001 > nul
 
+
 set "BAT_DIR=%~dp0"
 pushd "%~dp0.."
 set "PARENT_DIR=%CD%"
