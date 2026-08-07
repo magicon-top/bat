@@ -1,6 +1,7 @@
 @echo off
 chcp 65001 > nul
 
+
 if "%~1"=="" goto :usage
 if "%~2"=="" goto :usage
 
