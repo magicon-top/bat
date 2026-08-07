@@ -1,11 +1,7 @@
 @echo off
 chcp 65001 > nul
-<<<<<<< HEAD
-
-
-=======
 ::-------
->>>>>>> e95ea62 (refactor: simplify whitespace and add comment header in rename.bat)
+
 if "%~1"=="" goto :usage
 if "%~2"=="" goto :usage
 
