@@ -19,6 +19,37 @@ pushd "%~dp0.."
 set "ROOT_DIR=%CD%"
 popd
 
+:: 100% Reliable date parsing without PowerShell or WMIC
+for /f "tokens=3" %%a in ('reg query "HKCU\Control Panel\International" /v sShortDate 2^>nul') do set "S_FMT=%%a"
+for /f "tokens=1-3 delims=/.- " %%a in ("%date%") do (
+    set "p1=%%a"
+    set "p2=%%b"
+    set "p3=%%c"
+)
+
+:: Detect Year (4 digits) and pad Month/Day safely
+if "%p1:~3,1%" neq "" (
+    set "YYYY=%p1%"
+    set "MM=0%p2%"
+    set "DD=0%p3%"
+) else if "%p3:~3,1%" neq "" (
+    set "YYYY=%p3%"
+    if /i "%S_FMT:~0,1%"=="d" (
+        set "DD=0%p1%"
+        set "MM=0%p2%"
+    ) else (
+        set "MM=0%p1%"
+        set "DD=0%p2%"
+    )
+)
+
+:: Trim to last 2 digits ensuring proper zero padding (08 remains 08)
+set "MM=%MM:~-2%"
+set "DD=%DD:~-2%"
+
+set "TODAY=%YYYY%.%MM%.%DD%"
+set "TAG_NAME=v%TODAY%"
+
 :: Initialize counter for successful releases
 set "SUCCESS_COUNT=0"
 
@@ -26,6 +57,7 @@ echo %C_CYAN%===================================================%C_RESET%
 echo %C_GREEN%SMART ZIP RELEASE SYNC%C_RESET%
 echo %C_GRAY%Root directory:%C_RESET% %ROOT_DIR%
 echo %C_GRAY%Binaries directory:%C_RESET% %ROOT_DIR%\_bin
+echo %C_GRAY%Target Release Tag:%C_RESET% %C_YELLOW%%TAG_NAME%%C_RESET%
 echo %C_CYAN%===================================================%C_RESET%
 echo.
 
@@ -74,9 +106,9 @@ echo    %C_GRAY%[*] Found existing archive: %ZIP_NAME%%C_RESET%
 :: Get local file size
 for %%I in ("%LOCAL_ZIP%") do set "LOCAL_SIZE=%%~zI"
 
-:: Get GitHub asset size without downloading
+:: Get GitHub asset size from latest release without downloading
 set "REMOTE_SIZE="
-for /f "usebackq delims=" %%S in (`gh release view v1.0.0 -R "magicon-top/%REPO_NAME%" --json assets -q ".assets[0].size" 2^>nul`) do set "REMOTE_SIZE=%%S"
+for /f "usebackq delims=" %%S in (`gh release view --repo "magicon-top/%REPO_NAME%" --json assets -q ".assets[0].size" 2^>nul`) do set "REMOTE_SIZE=%%S"
 
 if "%REMOTE_SIZE%"=="" set "REMOTE_SIZE=null"
 
@@ -85,7 +117,7 @@ if "%REMOTE_SIZE%"=="null" (
     goto :upload_release
 )
 
-:: Compare file sizes
+:: Compare file sizes (If identical, skip completely without touching remote releases)
 if "%LOCAL_SIZE%"=="%REMOTE_SIZE%" (
     echo    %C_CYAN%[-] Skip: Archive size matches GitHub ^(%LOCAL_SIZE% bytes^).%C_RESET%
     goto :eof
@@ -105,7 +137,7 @@ if exist "%BIN_FOLDER%\" (
     )
     
     echo    %C_GRAY%[*] Folder "%REPO_NAME%" found. Packing into archive...%C_RESET%
-    powershell -NoProfile -Command "$ProgressPreference = 'SilentlyContinue'; Compress-Archive -Path '%BIN_FOLDER%\*' -DestinationPath '%LOCAL_ZIP%' -Force" >nul 2>&1
+    tar -a -c -f "%LOCAL_ZIP%" -C "%BIN_FOLDER%" . >nul 2>&1
     
     if not exist "%LOCAL_ZIP%" (
         echo    %C_RED%[ERROR] Failed to create zip archive.%C_RESET%
@@ -119,16 +151,19 @@ goto :eof
 
 
 :upload_release
-echo    %C_GRAY%[*] Uploading %ZIP_NAME% to GitHub...%C_RESET%
+echo    %C_GRAY%[*] Cleaning up old releases and uploading %ZIP_NAME% as %TAG_NAME%...%C_RESET%
 
-:: Delete previous release (errors suppressed if it didn't exist)
-gh release delete v1.0.0 -R "magicon-top/%REPO_NAME%" --yes > nul 2>&1
+:: Delete previous releases and tags before creating the new one
+for /f "usebackq delims=" %%R in (`gh release list -R "magicon-top/%REPO_NAME%" --limit 100 --json tagName -q ".[].tagName" 2^>nul`) do (
+    gh release delete "%%R" -R "magicon-top/%REPO_NAME%" --yes > nul 2>&1
+    git -C "%REPO_PATH%" push --delete origin "%%R" > nul 2>&1
+)
 
-:: Create new release and attach the archive
-gh release create v1.0.0 "%LOCAL_ZIP%" -R "magicon-top/%REPO_NAME%" --title "Release v1.0.0" --notes "Automated zipped build release" > nul 2>&1
+:: Create fresh release and upload zip
+gh release create "%TAG_NAME%" "%LOCAL_ZIP%" -R "magicon-top/%REPO_NAME%" --title "Release %TAG_NAME%" --notes "Automated zipped build release (%TAG_NAME%)" > nul 2>&1
 
 if %errorlevel% equ 0 (
-    echo    %C_GREEN%[SUCCESS]%C_RESET% Release %C_GREEN%%REPO_NAME%%C_RESET% successfully updated!
+    echo    %C_GREEN%[SUCCESS]%C_RESET% Release %C_GREEN%%REPO_NAME%%C_RESET% %TAG_NAME% successfully updated.
     set /a "SUCCESS_COUNT+=1"
 ) else (
     echo    %C_RED%[ERROR] Failed to update release for %REPO_NAME%.%C_RESET%
