@@ -13,11 +13,11 @@ echo (without deleting .git folder) for projects in:
 echo %PARENT_DIR%
 echo ===================================================
 echo.
-set /p "CONFIRM=Are you sure you want to continue? (Y/N): "
-if /i not "%CONFIRM%"=="Y" (
-    echo Aborted by user.
-    exit /b 0
-)
+::set /p "CONFIRM=Are you sure you want to continue? (Y/N): "
+::if /i not "%CONFIRM%"=="Y" (
+::    echo Aborted by user.
+::    exit /b 0
+::)
 
 echo.
 for /d %%D in ("%PARENT_DIR%\*") do (
