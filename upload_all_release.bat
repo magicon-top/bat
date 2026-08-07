@@ -19,7 +19,7 @@ pushd "%~dp0.."
 set "ROOT_DIR=%CD%"
 popd
 
-:: Инициализация счетчика успешных релизов
+:: Initialize counter for successful releases
 set "SUCCESS_COUNT=0"
 
 echo %C_CYAN%===================================================%C_RESET%
@@ -62,19 +62,19 @@ set "BIN_FOLDER=%ROOT_DIR%\_bin\%REPO_NAME%"
 set "LOCAL_ZIP=%ROOT_DIR%\_bin\%REPO_NAME%.zip"
 set "ZIP_NAME=%REPO_NAME%.zip"
 
-:: 1. Ищем локальный архив
+:: 1. Check for local archive
 if exist "%LOCAL_ZIP%" goto :check_existing_zip
 
-:: 2. Если архива нет - переходим к проверке папки
+:: 2. If no archive exists, check for folder
 goto :check_folder
 
 
 :check_existing_zip
 echo    %C_GRAY%[*] Found existing archive: %ZIP_NAME%%C_RESET%
-:: Получаем размер локального файла
+:: Get local file size
 for %%I in ("%LOCAL_ZIP%") do set "LOCAL_SIZE=%%~zI"
 
-:: Получаем размер архива с GitHub без скачивания
+:: Get GitHub asset size without downloading
 set "REMOTE_SIZE="
 for /f "usebackq delims=" %%S in (`gh release view v1.0.0 -R "magicon-top/%REPO_NAME%" --json assets -q ".assets[0].size" 2^>nul`) do set "REMOTE_SIZE=%%S"
 
@@ -85,7 +85,7 @@ if "%REMOTE_SIZE%"=="null" (
     goto :upload_release
 )
 
-:: Сравниваем размеры
+:: Compare file sizes
 if "%LOCAL_SIZE%"=="%REMOTE_SIZE%" (
     echo    %C_CYAN%[-] Skip: Archive size matches GitHub ^(%LOCAL_SIZE% bytes^).%C_RESET%
     goto :eof
@@ -97,7 +97,7 @@ goto :upload_release
 
 :check_folder
 if exist "%BIN_FOLDER%\" (
-    :: Проверяем, не пустая ли папка
+    :: Check if directory is not empty
     dir /b /s /a-d "%BIN_FOLDER%\*" >nul 2>&1
     if errorlevel 1 (
         echo    %C_CYAN%[-] Skip: No files found inside "%BIN_FOLDER%".%C_RESET%
@@ -121,10 +121,10 @@ goto :eof
 :upload_release
 echo    %C_GRAY%[*] Uploading %ZIP_NAME% to GitHub...%C_RESET%
 
-:: Удаляем старый релиз (ошибки подавляются, если его не было)
+:: Delete previous release (errors suppressed if it didn't exist)
 gh release delete v1.0.0 -R "magicon-top/%REPO_NAME%" --yes > nul 2>&1
 
-:: Создаем новый релиз и прикрепляем архив
+:: Create new release and attach the archive
 gh release create v1.0.0 "%LOCAL_ZIP%" -R "magicon-top/%REPO_NAME%" --title "Release v1.0.0" --notes "Automated zipped build release" > nul 2>&1
 
 if %errorlevel% equ 0 (
