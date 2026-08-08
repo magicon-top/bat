@@ -160,7 +160,8 @@ for /f "usebackq delims=" %%R in (`gh release list -R "magicon-top/%REPO_NAME%" 
 )
 
 :: Create fresh release and upload zip
-gh release create "%TAG_NAME%" "%LOCAL_ZIP%" -R "magicon-top/%REPO_NAME%" --title "Release %TAG_NAME%" --notes "Automated zipped build release (%TAG_NAME%)" > nul 2>&1
+gh release create "%TAG_NAME%" "%LOCAL_ZIP%" -R "magicon-top/%REPO_NAME%" --title "Release %TAG_NAME%" --notes "Automated zipped build release (%TAG_NAME%)" 
+::> nul 2>&1
 
 if %errorlevel% equ 0 (
     echo    %C_GREEN%[SUCCESS]%C_RESET% Release %C_GREEN%%REPO_NAME%%C_RESET% %TAG_NAME% successfully updated.
