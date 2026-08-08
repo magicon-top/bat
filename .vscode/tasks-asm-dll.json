@@ -1,0 +1,21 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Собрать NASM DLL (Windows)",
+            "type": "shell",
+            "command": "for %I in (\"${fileDirname}\\..\") do (cmd /c \"if not exist \"${fileDirname}\\..\\..\\_bin\\%~nxI\" mkdir \"${fileDirname}\\..\\..\\_bin\\%~nxI\"\" && \"C:\\Program Files\\NASM\\nasm.exe\" -f win64 \"${file}\" -o \"${fileDirname}\\${fileBasenameNoExtension}.obj\" && \"C:\\Program Files\\NASM\\golink.exe\" /dll /export ShowSplash /g /ni \"${fileDirname}\\${fileBasenameNoExtension}.obj\" kernel32.dll user32.dll gdi32.dll gdiplus.dll /fo \"${fileDirname}\\..\\..\\_bin\\%~nxI\\%~nxI.dll\" && if exist \"${fileDirname}\\${fileBasenameNoExtension}.obj\" del \"${fileDirname}\\${fileBasenameNoExtension}.obj\" && if exist \"${fileDirname}\\..\\bin\" xcopy /e /i /y \"${fileDirname}\\..\\bin\\*.*\" \"${fileDirname}\\..\\..\\_bin\\%~nxI\\\")",
+            "options": {
+                "shell": {
+                    "executable": "cmd.exe",
+                    "args": ["/d", "/c"]
+                }
+            },
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": ["$gcc"]
+        }
+    ]
+}
